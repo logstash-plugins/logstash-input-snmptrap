@@ -4,7 +4,8 @@ require "logstash/namespace"
 
 # Read snmp trap messages as events
 #
-# Resulting @message looks like :
+# Resulting `@message` looks like :
+# [source,ruby]
 #   #<SNMP::SNMPv1_Trap:0x6f1a7a4 @varbind_list=[#<SNMP::VarBind:0x2d7bcd8f @value="teststring", 
 #   @name=[1.11.12.13.14.15]>], @timestamp=#<SNMP::TimeTicks:0x1af47e9d @value=55>, @generic_trap=6, 
 #   @enterprise=[1.2.3.4.5.6], @source_ip="127.0.0.1", @agent_addr=#<SNMP::IpAddress:0x29a4833e @value="\xC0\xC1\xC2\xC3">, 
