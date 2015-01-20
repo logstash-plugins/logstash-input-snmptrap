@@ -14,7 +14,6 @@ require "logstash/namespace"
 
 class LogStash::Inputs::Snmptrap < LogStash::Inputs::Base
   config_name "snmptrap"
-  milestone 1
 
   # The address to listen on
   config :host, :validate => :string, :default => "0.0.0.0"
