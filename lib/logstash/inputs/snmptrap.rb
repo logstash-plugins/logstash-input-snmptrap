@@ -23,7 +23,7 @@ class LogStash::Inputs::Snmptrap < LogStash::Inputs::Base
   config :port, :validate => :number, :default => 1062
 
   # SNMP Community String to listen for.
-  config :community, :validate => :string, :default => "public"
+  config :community, :validate => :array, :default => "public"
 
   # directory of YAML MIB maps  (same format ruby-snmp uses)
   config :yamlmibdir, :validate => :string
