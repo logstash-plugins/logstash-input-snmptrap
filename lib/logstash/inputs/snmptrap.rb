@@ -2,13 +2,15 @@
 require "logstash/inputs/base"
 require "logstash/namespace"
 
+require "snmp"
+
 # Read snmp trap messages as events
 #
 # Resulting `@message` looks like :
 # [source,ruby]
-#   #<SNMP::SNMPv1_Trap:0x6f1a7a4 @varbind_list=[#<SNMP::VarBind:0x2d7bcd8f @value="teststring", 
-#   @name=[1.11.12.13.14.15]>], @timestamp=#<SNMP::TimeTicks:0x1af47e9d @value=55>, @generic_trap=6, 
-#   @enterprise=[1.2.3.4.5.6], @source_ip="127.0.0.1", @agent_addr=#<SNMP::IpAddress:0x29a4833e @value="\xC0\xC1\xC2\xC3">, 
+#   #<SNMP::SNMPv1_Trap:0x6f1a7a4 @varbind_list=[#<SNMP::VarBind:0x2d7bcd8f @value="teststring",
+#   @name=[1.11.12.13.14.15]>], @timestamp=#<SNMP::TimeTicks:0x1af47e9d @value=55>, @generic_trap=6,
+#   @enterprise=[1.2.3.4.5.6], @source_ip="127.0.0.1", @agent_addr=#<SNMP::IpAddress:0x29a4833e @value="\xC0\xC1\xC2\xC3">,
 #   @specific_trap=99>
 #
 
@@ -32,9 +34,7 @@ class LogStash::Inputs::Snmptrap < LogStash::Inputs::Base
     super(*args)
   end # def initialize
 
-  public
   def register
-    require "snmp"
     @snmptrap = nil
     if @yamlmibdir
       @logger.info("checking #{@yamlmibdir} for MIBs")
@@ -47,26 +47,35 @@ class LogStash::Inputs::Snmptrap < LogStash::Inputs::Base
     end
   end # def register
 
-  public
   def run(output_queue)
     begin
       # snmp trap server
       snmptrap_listener(output_queue)
     rescue => e
       @logger.warn("SNMP Trap listener died", :exception => e, :backtrace => e.backtrace)
-      sleep(5)
-      retry
+      Stud.stoppable_sleep(5) { stop? }
+      retry if !stop?
     end # begin
   end # def run
 
+  def stop
+    @snmptrap.exit unless @snmptrap.nil?
+    @snmptrap = nil
+  end
+
   private
-  def snmptrap_listener(output_queue)
+
+  def build_trap_listener
     traplistener_opts = {:Port => @port, :Community => @community, :Host => @host}
     if @yaml_mibs && !@yaml_mibs.empty?
       traplistener_opts.merge!({:MibDir => @yamlmibdir, :MibModules => @yaml_mibs})
     end
     @logger.info("It's a Trap!", traplistener_opts.dup)
     @snmptrap = SNMP::TrapListener.new(traplistener_opts)
+  end
+
+  def snmptrap_listener(output_queue)
+    build_trap_listener
 
     @snmptrap.on_trap_default do |trap|
       begin
