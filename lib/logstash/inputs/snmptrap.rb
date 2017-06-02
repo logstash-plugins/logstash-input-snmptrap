@@ -3,6 +3,7 @@ require "logstash/inputs/base"
 require "logstash/namespace"
 
 require "snmp"
+require_relative "snmptrap/patches/trap_listener"
 
 # Read snmp trap messages as events
 #
