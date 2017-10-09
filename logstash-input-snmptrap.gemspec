@@ -20,7 +20,7 @@ Gem::Specification.new do |s|
   s.metadata = { "logstash_plugin" => "true", "logstash_group" => "input" }
 
   # Gem dependencies
-  s.add_runtime_dependency "logstash-core-plugin-api", ">= 1.60", "<= 2.99"
+  s.add_runtime_dependency "logstash-core-plugin-api", ">= 1.60", "<= 6.99"
 
   s.add_runtime_dependency 'snmp'
   s.add_runtime_dependency 'logstash-codec-plain'
