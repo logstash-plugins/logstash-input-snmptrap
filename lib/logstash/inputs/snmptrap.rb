@@ -3,6 +3,7 @@ require "logstash/inputs/base"
 require "logstash/namespace"
 
 require "snmp"
+require "json"
 require_relative "snmptrap/patches/trap_listener"
 
 # Read snmp trap messages as events
@@ -30,6 +31,9 @@ class LogStash::Inputs::Snmptrap < LogStash::Inputs::Base
 
   # directory of YAML MIB maps  (same format ruby-snmp uses)
   config :yamlmibdir, :validate => :string
+  
+  # should we map varbinds to fields?
+  config :varbinds_to_fields, :validate => :boolean, default => false
 
   def initialize(*args)
     super(*args)
@@ -82,8 +86,16 @@ class LogStash::Inputs::Snmptrap < LogStash::Inputs::Base
       begin
         event = LogStash::Event.new("message" => trap.inspect, "host" => trap.source_ip)
         decorate(event)
-        trap.each_varbind do |vb|
-          event.set(vb.name.to_s, vb.value.to_s)
+        if @varbind_to_fields
+          trap.each_varbind do |vb|
+            event.set(vb.name.to_s, vb.value.to_s)
+          end
+        else
+          varbinds = []
+          trap.each_varbind do |vb|
+            varbinds << {vb.name.to_s => vb.value.to_s}
+          end
+          event.set('varbinds', varbinds.to_json)
         end
         @logger.debug("SNMP Trap received: ", :trap_object => trap.inspect)
         output_queue << event
