@@ -33,7 +33,7 @@ class LogStash::Inputs::Snmptrap < LogStash::Inputs::Base
   config :yamlmibdir, :validate => :string
   
   # should we map varbinds to fields?
-  config :varbinds_to_fields, :validate => :boolean, default => false
+  config :varbinds_to_fields, :validate => :boolean, :default => false
 
   def initialize(*args)
     super(*args)
