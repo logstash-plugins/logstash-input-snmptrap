@@ -1,6 +1,6 @@
 # Logstash Plugin
 
-[![Travis Build Status](https://travis-ci.org/logstash-plugins/logstash-input-snmptrap.svg)](https://travis-ci.org/logstash-plugins/logstash-input-snmptrap)
+[![Travis Build Status](https://travis-ci.com/logstash-plugins/logstash-input-snmptrap.svg)](https://travis-ci.com/logstash-plugins/logstash-input-snmptrap)
 
 This is a plugin for [Logstash](https://github.com/elastic/logstash).
 
