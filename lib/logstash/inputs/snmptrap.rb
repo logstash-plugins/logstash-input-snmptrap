@@ -28,6 +28,10 @@ class LogStash::Inputs::Snmptrap < LogStash::Inputs::Base
   # SNMP Community String to listen for.
   config :community, :validate => :array, :default => "public"
 
+  # Whether to allow traps with any community to be accepted.
+  # When set to true, the `community` option will be ignored.
+  config :accept_any_community, :validate => :boolean, :default => false
+
   # directory of YAML MIB maps  (same format ruby-snmp uses)
   config :yamlmibdir, :validate => :string
 
@@ -67,7 +71,10 @@ class LogStash::Inputs::Snmptrap < LogStash::Inputs::Base
   private
 
   def build_trap_listener
-    traplistener_opts = {:Port => @port, :Community => @community, :Host => @host}
+    traplistener_opts = {:Port => @port, :Host => @host}
+    if !@accept_any_community
+      traplistener_opts.merge!({:Community => @community})
+    end
     if @yaml_mibs && !@yaml_mibs.empty?
       traplistener_opts.merge!({:MibDir => @yamlmibdir, :MibModules => @yaml_mibs})
     end
