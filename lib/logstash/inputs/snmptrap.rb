@@ -35,6 +35,11 @@ class LogStash::Inputs::Snmptrap < LogStash::Inputs::Base
     super(*args)
   end # def initialize
 
+  def bin_to_hex(s)
+    s.each_byte.map { |b| b.to_s(16).rjust(2,'0') }.join(":")
+  end
+
+
   def register
     @snmptrap = nil
     if @yamlmibdir
@@ -83,12 +88,18 @@ class LogStash::Inputs::Snmptrap < LogStash::Inputs::Base
         event = LogStash::Event.new("message" => trap.inspect, "host" => trap.source_ip)
         decorate(event)
         trap.each_varbind do |vb|
-          event.set(vb.name.to_s, vb.value.to_s)
-        end
+	   if vb.value.to_s.force_encoding("UTF-8").ascii_only?
+	          event.set(vb.name.to_s, vb.value.to_s)
+	   else
+		event.set(vb.name.to_s, bin_to_hex(vb.value))		  
+	   end
+	end
+
         @logger.debug("SNMP Trap received: ", :trap_object => trap.inspect)
         output_queue << event
-      rescue => event
-        @logger.error("Failed to create event", :trap_object => trap.inspect)
+	rescue => event
+        #@logger.error("Failed to create event", :trap_object => trap.inspect)
+	@logger.error("Failed to create event: ", :message => msg, :exception => e, :backtrace => e.backtrace); 
       end
     end
     @snmptrap.join
