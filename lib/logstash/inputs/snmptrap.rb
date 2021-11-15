@@ -5,6 +5,9 @@ require "logstash/namespace"
 require "snmp"
 require_relative "snmptrap/patches/trap_listener"
 
+require 'logstash/plugin_mixins/event_support/event_factory_adapter'
+require 'logstash/plugin_mixins/validator_support/field_reference_validation_adapter'
+
 # Read snmp trap messages as events
 #
 # Resulting `@message` looks like :
@@ -16,6 +19,11 @@ require_relative "snmptrap/patches/trap_listener"
 #
 
 class LogStash::Inputs::Snmptrap < LogStash::Inputs::Base
+
+  include LogStash::PluginMixins::EventSupport::EventFactoryAdapter
+
+  extend LogStash::PluginMixins::ValidatorSupport::FieldReferenceValidationAdapter
+
   config_name "snmptrap"
 
   # The address to listen on
@@ -51,7 +59,7 @@ class LogStash::Inputs::Snmptrap < LogStash::Inputs::Base
   def run(output_queue)
     begin
       # snmp trap server
-      snmptrap_listener(output_queue)
+      snmptrap_listener(output_queue).join
     rescue => e
       @logger.warn("SNMP Trap listener died", :exception => e, :backtrace => e.backtrace)
       Stud.stoppable_sleep(5) { stop? }
@@ -72,26 +80,32 @@ class LogStash::Inputs::Snmptrap < LogStash::Inputs::Base
       traplistener_opts.merge!({:MibDir => @yamlmibdir, :MibModules => @yaml_mibs})
     end
     @logger.info("It's a Trap!", traplistener_opts.dup)
-    @snmptrap = SNMP::TrapListener.new(traplistener_opts)
+    SNMP::TrapListener.new(traplistener_opts)
   end
 
   def snmptrap_listener(output_queue)
-    build_trap_listener
+    @snmptrap = build_trap_listener
 
     @snmptrap.on_trap_default do |trap|
       begin
-        event = LogStash::Event.new("message" => trap.inspect, "host" => trap.source_ip)
-        decorate(event)
-        trap.each_varbind do |vb|
-          event.set(vb.name.to_s, vb.value.to_s)
-        end
-        @logger.debug("SNMP Trap received: ", :trap_object => trap.inspect)
-        output_queue << event
-      rescue => event
-        @logger.error("Failed to create event", :trap_object => trap.inspect)
+        output_queue << process_trap(trap)
+      rescue => e
+        @logger.error("Failed to create event", :exception => e, :backtrace => e.backtrace, :trap_object => trap)
       end
     end
-    @snmptrap.join
+    @snmptrap
   end # def snmptrap_listener
+
+  def process_trap(trap)
+    @logger.debug? && @logger.debug("SNMP Trap received: ", :trap_object => trap)
+
+    data = { "message" => trap.inspect, "host" => trap.source_ip }
+    trap.each_varbind do |vb|
+      data[vb.name.to_s] = vb.value.to_s
+    end
+    event = event_factory.new_event(data)
+    decorate(event)
+    event
+  end
 
 end # class LogStash::Inputs::Snmptrap
