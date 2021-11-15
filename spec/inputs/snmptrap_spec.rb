@@ -38,6 +38,8 @@ describe LogStash::Inputs::Snmptrap do
     before { @event = input.send :process_trap, trap }
 
     it "extract snmp payload" do
+      expect( @event.get('message') ).to be_a String # #<SNMP::SNMPv1_Trap:0x664c6bbc @enterprise=[1.3.6.1.4.1.9] ... >
+
       expect( @event.get('1.3.6.1.2.3.4') ).to eql '111'
     end
 
@@ -58,6 +60,8 @@ describe LogStash::Inputs::Snmptrap do
     before { @event = input.send :process_trap, trap }
 
     it "extract snmp payload" do
+      expect( @event.get('message') ).to be_a String
+
       expect( @event.get('1.2.3') ).to eql 'Null'
       expect( @event.get('1.3.6.1.2.1.1.3.0') ).to eql '00:00:10.11' # uptime tick
     end
