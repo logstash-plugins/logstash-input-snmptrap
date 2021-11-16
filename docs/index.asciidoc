@@ -31,6 +31,7 @@ Resulting `message` field looks like :
   @specific_trap=99>
 
 
+[id="plugins-{type}s-{plugin}-ecs"]
 ==== Compatibility with the Elastic Common Schema (ECS)
 
 Because SNMP data has specific field names based on OIDs, we recommend setting a <<plugins-{type}s-{plugin}-target>>.
