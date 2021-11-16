@@ -5,6 +5,8 @@ require "logstash/namespace"
 require "snmp"
 require_relative "snmptrap/patches/trap_listener"
 
+require 'logstash/plugin_mixins/ecs_compatibility_support'
+require 'logstash/plugin_mixins/ecs_compatibility_support/target_check'
 require 'logstash/plugin_mixins/event_support/event_factory_adapter'
 require 'logstash/plugin_mixins/validator_support/field_reference_validation_adapter'
 
@@ -19,6 +21,9 @@ require 'logstash/plugin_mixins/validator_support/field_reference_validation_ada
 #
 
 class LogStash::Inputs::Snmptrap < LogStash::Inputs::Base
+
+  include LogStash::PluginMixins::ECSCompatibilitySupport(:disabled, :v1, :v8 => :v1)
+  include LogStash::PluginMixins::ECSCompatibilitySupport::TargetCheck
 
   include LogStash::PluginMixins::EventSupport::EventFactoryAdapter
 
@@ -39,9 +44,16 @@ class LogStash::Inputs::Snmptrap < LogStash::Inputs::Base
   # directory of YAML MIB maps  (same format ruby-snmp uses)
   config :yamlmibdir, :validate => :string
 
-  def initialize(*args)
-    super(*args)
-  end # def initialize
+  # Defines a target field for placing fields.
+  # If this setting is omitted, data gets stored at the root (top level) of the event.
+  # The target is only relevant while decoding data into a new event.
+  config :target, :validate => :field_reference
+
+  def initialize(params={})
+    super(params)
+
+    @host_ip_field = ecs_select[disabled: 'host', v1: '[host][ip]']
+  end
 
   def register
     @snmptrap = nil
@@ -99,11 +111,13 @@ class LogStash::Inputs::Snmptrap < LogStash::Inputs::Base
   def process_trap(trap)
     @logger.debug? && @logger.debug("SNMP Trap received: ", :trap_object => trap)
 
-    data = { "message" => trap.inspect, "host" => trap.source_ip }
+    data = Hash.new
     trap.each_varbind do |vb|
       data[vb.name.to_s] = vb.value.to_s
     end
-    event = event_factory.new_event(data)
+    event = targeted_event_factory.new_event(data)
+    event.set(@host_ip_field, trap.source_ip)
+    event.set('message', trap.inspect)
     decorate(event)
     event
   end
