@@ -116,7 +116,7 @@ class LogStash::Inputs::Snmptrap < LogStash::Inputs::Base
       data[vb.name.to_s] = vb.value.to_s
     end
     event = targeted_event_factory.new_event(data)
-    event.set(@host_ip_field, trap.source_ip)
+    event.set(@host_ip_field, trap.source_ip) if trap.source_ip
     event.set('message', trap.inspect)
     decorate(event)
     event
