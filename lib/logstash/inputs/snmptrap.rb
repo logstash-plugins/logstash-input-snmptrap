@@ -109,7 +109,7 @@ class LogStash::Inputs::Snmptrap < LogStash::Inputs::Base
   end # def snmptrap_listener
 
   def process_trap(trap)
-    @logger.debug? && @logger.debug("SNMP Trap received: ", :trap_object => trap)
+    @logger.debug? && @logger.debug("SNMP Trap received: ", :trap_object => trap.inspect)
 
     data = Hash.new
     trap.each_varbind do |vb|
