@@ -23,7 +23,7 @@ include::{include_path}/plugin_header.asciidoc[]
 
 Read snmp trap messages as events
 
-Resulting `message` field looks like :
+Resulting `message` field resembles:
 [source,ruby]
   #<SNMP::SNMPv1_Trap:0x6f1a7a4 @varbind_list=[#<SNMP::VarBind:0x2d7bcd8f @value="teststring",
   @name=[1.11.12.13.14.15]>], @timestamp=#<SNMP::TimeTicks:0x1af47e9d @value=55>, @generic_trap=6,
