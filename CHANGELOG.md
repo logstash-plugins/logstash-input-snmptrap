@@ -1,3 +1,6 @@
+## 3.1.0
+  - Feat: ecs_compatiblity support + (optional) target [#37](https://github.com/logstash-plugins/logstash-input-snmptrap/pull/37)
+
 ## 3.0.6
   - Docs: Set the default_codec doc attribute.
 
