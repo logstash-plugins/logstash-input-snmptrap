@@ -57,7 +57,7 @@ describe LogStash::Inputs::Snmptrap, :ecs_compatibility_support do
 
     end
 
-    context 'v2' do
+    context 'with an SNMP v2 trap' do
 
       let(:trap) do
         trap = snmp_manager.trap_v2(1011, "1.3.6.1.2.1.1.1.0", ["1.2.3", "1.4.5.6"])
