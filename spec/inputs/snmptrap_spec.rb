@@ -31,7 +31,7 @@ describe LogStash::Inputs::Snmptrap, :ecs_compatibility_support do
 
     let(:config) { super().merge 'ecs_compatibility' => ecs_compatibility }
 
-    context 'v1' do
+    context 'with an SNMP v1 trap' do
 
       let(:trap) do
         trap = snmp_manager.trap_v1("enterprises.9", "10.1.2.3", :enterpriseSpecific, 42, 12345,
